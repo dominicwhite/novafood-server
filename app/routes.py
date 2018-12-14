@@ -1,12 +1,10 @@
 import random
+from flask import json
 
-from flask import Flask, json
-
-app = Flask(__name__)
+from app import app
 
 with open("all_data.json", "r") as f:
     j = json.load(f)
-
 
 @app.route("/<path:path>")
 def home(path):
