@@ -1,11 +1,12 @@
 import random
 from flask import json
-from geoalchemy2 import functions, WKTElement
+from geoalchemy2 import functions, WKBElement, WKTElement
 from sqlalchemy.sql import func
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geometry, shape
 
+from shapely.geometry import Point
 
-from app import app
+from app import app, db
 from app.models import Restaurant
 
 @app.route("/<path:path>")
@@ -14,12 +15,11 @@ def home(path):
     restaurants = Restaurant.query.filter(
         func.PtDistWithin(
             Restaurant.location,
-            WKTElement('POINT(-77.088477, 38.864428)', srid=4326),
-            100000000,
-            type_=geometry_type)
+            WKTElement('POINT(38.864428 -77.088477)', srid=4326),
+            10000000000000,
+            type_=geometry_type
+        )
     ).all()
-    # restaurants = Restaurant.query.filter(Restaurant.location.Distance(WKTElement('POINT(-77.088477, 38.864428)')) < 100000).limit(10)
-
     restaurant_json = [{
         'name': r.restaurant_name,
         'coords': r.location.data
