@@ -1,11 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
+import os
 
 DB_NAME = 'gis.db'
 
 def load_spatialite(dbapi_conn, connection_record):
     dbapi_conn.enable_load_extension(True)
-    dbapi_conn.load_extension('/usr/lib/x86_64-linux-gnu/mod_spatialite.so')
+    dbapi_conn.load_extension(os.getenv('SPATIALITE_LIBRARY_PATH','/usr/lib/x86_64-linux-gnu/mod_spatialite.so'))
 
 import os
 if DB_NAME in os.listdir(os.getcwd()):
