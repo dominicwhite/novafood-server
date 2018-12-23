@@ -19,31 +19,88 @@ from sqlalchemy.sql import select, func
 conn.execute(select([func.InitSpatialMetaData(1)]))
 conn.close()
 
-from app.models import Restaurant
+from app.models import Restaurant, Inspection
 
 Restaurant.__table__.create(engine)
+Inspection.__table__.create(engine)
 
 from sqlalchemy.orm import sessionmaker
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# r = Restaurant(restaurant_name="Test McDonalds", location='POINT(1 1)')
-# session.add(r)
+import datetime
 
-import json
-with open('all_data.json') as f:
-    data = json.load(f)
-    restaurant_data = data['restaurants']
-    data_to_load = []
-    # x = 0
-    for r in restaurant_data:
-        data_to_load.append(
-            Restaurant(id=r['id'], restaurant_name=r['name'], location=f'POINT({r["long"]} {r["lat"]})')
+def parse_date(ts):
+    d = ts[:ts.find(' ')]
+    return datetime.datetime.strptime(d, '%m/%d/%Y')
+
+data_dict = {}
+
+import csv
+with open('geocoded.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    for idx, row in enumerate(reader):
+        data_dict[row['UNID']] = {
+            'id': idx + 1,
+            'street': row['fullstreet'],
+            'city': row['PCITY'],
+            'state': row['PSTATE'],
+            'zip': row['PCODE'],
+            'lat': row['Latitude'],
+            'lon': row['Longitude'],
+            'inspections': {}
+        }
+
+with open('inspections.csv', 'r') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        if row['UNID'] not in data_dict:
+            continue
+        data_dict[row['UNID']]['status'] = row['STAGE']
+        data_dict[row['UNID']]['name'] = row['NAME']
+        if row['INSPNO'] in data_dict[row['UNID']]['inspections']:
+            inspection_dict = data_dict[row['UNID']]['inspections'][row['INSPNO']]
+            inspection_dict['codes'] = inspection_dict['codes'] + '; ' + row['CODE']
+            inspection_dict['violation_count'] += 1
+        else:
+            inspection_dict = {'codes': row['CODE'], 'violation_count': 1}
+            inspection_dict['comment'] = row['COMM']
+            inspection_dict['date'] = parse_date(row['EDATE'])
+        data_dict[row['UNID']]['inspections'][row['INSPNO']] = inspection_dict
+
+restaurants_to_load = []
+inspections_to_load = []
+for k in data_dict.keys():
+    r = data_dict[k]
+    if r['status'] != 'Active':
+        continue
+    restaurants_to_load.append(
+        Restaurant(
+            id=r['id'],
+            restaurant_name=r['name'],
+            street=r['street'],
+            city=r['city'],
+            state=r['state'],
+            zip=r['zip'],
+            source_id=k,
+            location=f'POINT({r["lon"]} {r["lat"]})',
+
         )
-        # x += 1
-        # if x > 10: break
+    )
+    for i_k in r['inspections'].keys():
+        i = r['inspections'][i_k]
+        inspections_to_load.append(Inspection(
+            restaurant_id=r['id'],
+            source_id=i_k,
+            year=i['date'].year,
+            month=i['date'].month,
+            day=i['date'].day,
+            codes=i['codes'],
+            comment=i['comment']
+        ))
 
-session.add_all(data_to_load)
+session.add_all(restaurants_to_load)
+session.add_all(inspections_to_load)
 session.commit()
 
 from geoalchemy2 import functions
@@ -53,3 +110,10 @@ for r in q:
     print(r)
     print(r[0])
     print(r[0].restaurant_name)
+
+q2 = session.query(Inspection).limit(3)
+for r in q2:
+    print(r)
+    print(r.restaurant.restaurant_name)
+    print(r.source_id)
+

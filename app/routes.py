@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 from geoalchemy2 import Geometry
 
 from app import app, db
-from app.models import Restaurant
+from app.models import Restaurant, Inspection
 
 @app.route("/restaurants/")
 def restaurants_view():
@@ -32,3 +32,17 @@ def restaurants_view():
         'lat': r[2]
     } for r in restaurants]
     return json.jsonify(restaurant_json)
+
+@app.route('/restaurants/<int:id>/inspections/')
+def inspections_view(id):
+    inspection_data = []
+    inspections = Inspection.query.filter_by(restaurant_id=id).all()
+    for i in inspections:
+        inspection_data.append({
+            'year': i.year,
+            'month': i.month,
+            'day': i.day,
+            'codes': i.codes,
+            'comment': i.comment
+        })
+    return json.jsonify(inspection_data)
