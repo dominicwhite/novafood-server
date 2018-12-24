@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from sqlalchemy.event import listens_for
 from sqlalchemy.sql import select, func
 
@@ -9,6 +10,7 @@ from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
+cors = CORS(app)
 db = SQLAlchemy(app)
 
 @listens_for(db.engine, "connect")
