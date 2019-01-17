@@ -59,7 +59,9 @@ def restaurants_view():
 @app.route('/restaurants/<int:id>/inspections/')
 def inspections_view(id):
     inspection_data = []
-    inspections = Inspection.query.filter_by(restaurant_id=id).all()
+    inspections = Inspection.query.filter_by(restaurant_id=id).order_by(
+        -Inspection.year, -Inspection.month, -Inspection.day
+    ).all()
     for i in inspections:
         inspection_data.append({
             'year': i.year,
