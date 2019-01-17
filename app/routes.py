@@ -6,7 +6,7 @@ from geoalchemy2 import Geometry
 from app import app, db
 from app.models import Restaurant, Inspection
 
-def get_data_from_db(filter_by, lat, lon, count, radius):
+def get_data_from_db(filter_by, lat, long, count, radius):
     # TODO: filter by best & worst as well. Requires some measure of "goodness" and its calculation either during the
     #  query or during the ETL process
     geometry_type = Geometry(management=True, use_st_prefix=False)
@@ -14,7 +14,7 @@ def get_data_from_db(filter_by, lat, lon, count, radius):
         restaurants = db.session.query(Restaurant, func.ST_X(Restaurant.location), func.ST_Y(Restaurant.location), Inspection).filter(
             func.PtDistWithin(
                 Restaurant.location,
-                WKTElement(f'POINT({lon} {lat})', srid=4326),
+                WKTElement(f'POINT({long} {lat})', srid=4326),
                 radius,
                 type_=geometry_type
             )
@@ -27,14 +27,14 @@ def get_data_from_db(filter_by, lat, lon, count, radius):
     restaurants = db.session.query(Restaurant, func.ST_X(Restaurant.location), func.ST_Y(Restaurant.location)).filter(
         func.PtDistWithin(
             Restaurant.location,
-            WKTElement(f'POINT({lon} {lat})', srid=4326),
+            WKTElement(f'POINT({long} {lat})', srid=4326),
             radius,
             type_=geometry_type
         )
     ).order_by(
         func.ST_Distance(
             Restaurant.location,
-            WKTElement(f'POINT({lon} {lat})', srid=4326)
+            WKTElement(f'POINT({long} {lat})', srid=4326)
         )
     ).limit(count)
     return restaurants
@@ -43,11 +43,11 @@ def get_data_from_db(filter_by, lat, lon, count, radius):
 @app.route("/restaurants/")
 def restaurants_view():
     lat = request.args.get('lat', default=38.864428, type=float)
-    lon = request.args.get('lon', default=-77.088477, type=float)
+    long = request.args.get('long', default=-77.088477, type=float)
     count = request.args.get('count', default=10, type=int)
     radius = request.args.get('radius', default=100, type=int)
     filter_by = request.args.get('filter_by', default='distance', type=str)
-    restaurants = get_data_from_db(filter_by, lat, lon, count, radius)
+    restaurants = get_data_from_db(filter_by, lat, long, count, radius)
     restaurant_json = [{
         'id': r[0].id,
         'name': r[0].restaurant_name,
