@@ -11,30 +11,38 @@ def get_data_from_db(filter_by, lat, long, count, radius):
     #  query or during the ETL process
     geometry_type = Geometry(management=True, use_st_prefix=False)
     if filter_by == "recent":
-        restaurants = db.session.query(Restaurant, func.ST_X(Restaurant.location), func.ST_Y(Restaurant.location), Inspection).filter(
+        restaurants = db.session.query(
+            Restaurant,
+            func.ST_X(Restaurant.location),
+            func.ST_Y(Restaurant.location),
+            Inspection
+        ).filter(
             func.PtDistWithin(
                 Restaurant.location,
-                WKTElement(f'POINT({long} {lat})', srid=4326),
-                radius,
-                type_=geometry_type
+                WKTElement('POINT(' + str(long) + ' ' + str(lat) + ')'),
+                radius
             )
         ).filter(
-            Restaurant.id == Inspection.restaurant_id
+             Restaurant.id == Inspection.restaurant_id
         ).order_by(
             -Inspection.year, -Inspection.month, -Inspection.day
-        ).limit(count)
+        ).group_by(Restaurant.id).limit(count)
         return restaurants
-    restaurants = db.session.query(Restaurant, func.ST_X(Restaurant.location), func.ST_Y(Restaurant.location)).filter(
+    # if filter_by == distance, or unspecified, then return this default query:
+    restaurants = db.session.query(
+        Restaurant,
+        func.ST_X(Restaurant.location),
+        func.ST_Y(Restaurant.location)
+    ).filter(
         func.PtDistWithin(
             Restaurant.location,
-            WKTElement(f'POINT({long} {lat})', srid=4326),
-            radius,
-            type_=geometry_type
+            WKTElement('POINT(' + str(long) + ' ' + str(lat) + ')'),
+            radius
         )
     ).order_by(
         func.ST_Distance(
             Restaurant.location,
-            WKTElement(f'POINT({long} {lat})', srid=4326)
+            WKTElement('POINT('+str(long)+' '+str(lat)+')')
         )
     ).limit(count)
     return restaurants
@@ -45,7 +53,7 @@ def restaurants_view():
     lat = request.args.get('lat', default=38.864428, type=float)
     long = request.args.get('long', default=-77.088477, type=float)
     count = request.args.get('count', default=10, type=int)
-    radius = request.args.get('radius', default=100, type=int)
+    radius = request.args.get('radius', default=100, type=float)
     filter_by = request.args.get('filter_by', default='distance', type=str)
     restaurants = get_data_from_db(filter_by, lat, long, count, radius)
     restaurant_json = [{
