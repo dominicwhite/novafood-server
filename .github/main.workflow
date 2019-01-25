@@ -29,7 +29,7 @@ action "Tag image for GCR" {
 
     # GKE
   }
-  args = ["novafood-api", "gcr.io/$PROJECT_ID/$APPLICATION_NAME:$GITHUB_SHA"]
+  args = ["novafood-api", "gcr.io/$PROJECT_ID/$APPLICATION_NAME"]
 }
 
 action "Set Credential Helper for Docker" {
@@ -50,7 +50,7 @@ action "Push image to GCR" {
 
     # GKE
   }
-  args = ["docker push gcr.io/$PROJECT_ID/$APPLICATION_NAME:$GITHUB_SHA"]
+  args = ["docker push gcr.io/$PROJECT_ID/$APPLICATION_NAME"]
 }
 
 # TOD Deploy to kubectl cluster
