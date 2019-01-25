@@ -10,12 +10,6 @@ action "Build Docker image" {
   args = ["build", "-t", "gcloud-example-app", "."]
 }
 
-# Deploy Filter
-action "Deploy branch filter" {
-  needs = ["Set Credential Helper for Docker"]
-  uses = "actions/bin/filter@master"
-  args = "branch master"
-}
 
 # GKE
 
@@ -45,7 +39,7 @@ action "Set Credential Helper for Docker" {
 }
 
 action "Push image to GCR" {
-  needs = ["Setup Google Cloud", "Deploy branch filter"]
+  needs = ["Setup Google Cloud"]
   uses = "actions/gcloud/cli@master"
   runs = "sh -c"
   env = {
