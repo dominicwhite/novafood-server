@@ -1,4 +1,4 @@
-###Installation
+### Installation
 
 To setup Python (need Python>=3.6):
 
@@ -20,7 +20,7 @@ To run app:
 FLASK_APP=foodapi flask run
 ```
 
-###API Endpoints
+### API Endpoints
 
 **`/restaurants/`**
 
