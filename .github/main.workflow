@@ -7,7 +7,7 @@ workflow "Build and Deploy" {
 
 action "Build Docker image" {
   uses = "actions/docker/cli@master"
-  args = ["build", "-t", "gcloud-example-app", "."]
+  args = ["build", "-t", "novafood-api", "."]
 }
 
 
@@ -39,7 +39,7 @@ action "Set Credential Helper for Docker" {
 }
 
 action "Push image to GCR" {
-  needs = ["Setup Google Cloud"]
+  needs = ["Set Credential Helper for Docker"]
   uses = "actions/gcloud/cli@master"
   runs = "sh -c"
   env = {
