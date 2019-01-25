@@ -29,7 +29,7 @@ action "Tag image for GCR" {
 
     # GKE
   }
-  args = ["novafood-api", "gcr.io/$PROJECT_ID/$APPLICATION_NAME"]
+  args = ["novafood-api", "gcr.io/$PROJECT_ID/$APPLICATION_NAME:$GITHUB_SHA"]
 }
 
 action "Set Credential Helper for Docker" {
