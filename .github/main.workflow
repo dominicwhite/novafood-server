@@ -59,4 +59,4 @@ action "Push image to GCR" {
   args = ["docker push gcr.io/$PROJECT_ID/$APPLICATION_NAME:$GITHUB_SHA"]
 }
 
-# TODO Add Action to start GitHub Deploy
+# TOD Deploy to kubectl cluster
