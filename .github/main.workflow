@@ -19,7 +19,7 @@ action "Setup Google Cloud" {
 }
 
 action "Tag image for GCR" {
-  needs = ["Setup Google Cloud", "Build Docker image"]
+  needs = ["Build Docker image"]
   uses = "actions/docker/tag@master"
   env = {
     PROJECT_ID = "mattva01-generic"
@@ -32,25 +32,31 @@ action "Tag image for GCR" {
   args = ["novafood-api", "gcr.io/$PROJECT_ID/$APPLICATION_NAME"]
 }
 
+action "Better tagging" {
+  needs = ["Tag image for GCR"]
+  uses = "actions/docker/cli@master"
+  env = {
+    PROJECT_ID = "mattva01-generic"
+    APPLICATION_NAME = "novafood-server"
+  }
+  args = "tag novafood-api gcr.io/$PROJECT_ID/$APPLICATION_NAME:$IMAGE_SHA-$IMAGE_REF"
+}
+
 action "Set Credential Helper for Docker" {
-  needs = ["Setup Google Cloud", "Tag image for GCR"]
+  needs = ["Setup Google Cloud"]
   uses = "actions/gcloud/cli@master"
   args = ["auth", "configure-docker", "--quiet"]
 }
 
 action "Push image to GCR" {
-  needs = ["Set Credential Helper for Docker"]
+  needs = ["Set Credential Helper for Docker","Better tagging"]
   uses = "actions/gcloud/cli@master"
   runs = "sh -c"
   env = {
     PROJECT_ID = "mattva01-generic"
     APPLICATION_NAME = "novafood-server"
-
-    # Build
-
-    # GKE
   }
-  args = ["docker push gcr.io/$PROJECT_ID/$APPLICATION_NAME"]
+  args = "docker push gcr.io/$PROJECT_ID/$APPLICATION_NAME:$IMAGE_SHA-$IMAGE_REF"
 }
 
 # TOD Deploy to kubectl cluster
