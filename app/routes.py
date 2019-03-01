@@ -79,3 +79,22 @@ def inspections_view(id):
             'comment': i.comment
         })
     return json.jsonify(inspection_data)
+
+@app.route('/restaurants/inspections/')
+def multiple_inspections_view():
+    restaurants = list(map(lambda x: int(x), request.args.get('restaurants', type=str).split(',')))
+    print('restaurants', restaurants)
+    inspection_data = []
+    inspections = Inspection.query.filter(Inspection.restaurant_id.in_(restaurants)).order_by(
+        Inspection.restaurant_id, -Inspection.year, -Inspection.month, -Inspection.day
+    ).all()
+    for i in inspections:
+        inspection_data.append({
+            'restaurant_id': i.restaurant_id,
+            'year': i.year,
+            'month': i.month,
+            'day': i.day,
+            'codes': i.codes,
+            'comment': i.comment
+        })
+    return json.jsonify(inspection_data)
