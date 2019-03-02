@@ -82,7 +82,10 @@ def inspections_view(id):
 
 @app.route('/restaurants/inspections/')
 def multiple_inspections_view():
-    restaurants = list(map(lambda x: int(x), request.args.get('restaurants', type=str).split(',')))
+    try:
+        restaurants = list(map(lambda x: int(x), request.args.get('restaurants', type=str).split(',')))
+    except ValueError:
+        restaurants = []
     print('restaurants', restaurants)
     inspection_data = []
     inspections = Inspection.query.filter(Inspection.restaurant_id.in_(restaurants)).order_by(
